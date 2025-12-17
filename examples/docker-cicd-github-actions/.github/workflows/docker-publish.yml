@@ -16,7 +16,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  EXAMPLE_PATH: examples/docker-cicd-github-actions
 
 jobs:
   # Job 1: Build and Test
@@ -34,7 +33,7 @@ jobs:
             --build-arg APP_VERSION=${{ github.sha }} \
             --build-arg GITHUB_SHA=${{ github.sha }} \
             -t test-image \
-            ./${{ env.EXAMPLE_PATH }}
+            .
       
       - name: 🧪 Run tests in container
         run: |
@@ -84,7 +83,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub
+          password: ${{ secrets.GITHUB_TOKEN }}  # Otomatik olarak sağlanır
       
       - name: 📝 Extract metadata (tags, labels)
         id: meta
@@ -102,13 +101,13 @@ jobs:
             type=semver,pattern={{major}}
             # Git commit SHA (sha-abc1234)
             type=sha,prefix=sha-
-            # Latest tag (only for main branch)
+            # Latest tag (sadece main branch için)
             type=raw,value=latest,enable={{is_default_branch}}
       
       - name: 🏗️ Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ env.EXAMPLE_PATH }}
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -150,7 +149,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: 🏗️ Build image for scanning
-        run: docker build -t scan-image ./${{ env.EXAMPLE_PATH }}
+        run: docker build -t scan-image .
       
       - name: 🔒 Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
